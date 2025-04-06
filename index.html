@@ -1614,17 +1614,23 @@
         .heart, .diamond, .spade, .club {
             font-size: 1.2em;
         }
-        .heart, .diamond {
-            color: #e53e3e;
+        .heart {
+            color: #e53e3e; /* 红色 */
         }
-        .dark-mode .heart, .dark-mode .diamond {
-            color: #fc8181;
+        .dark-mode .heart {
+            color: #fc8181; /* 深色模式下的红色 */
+        }
+        .diamond {
+            color: #ed8936; /* 橙色 */
+        }
+        .dark-mode .diamond {
+            color: #f6ad55; /* 深色模式下的橙色 */
         }
         .spade {
-            color: #805ad5;
+            color: #805ad5; /* 紫色 */
         }
         .dark-mode .spade {
-            color: #9f7aea;
+            color: #9f7aea; /* 深色模式下的紫色 */
         }
         .club {
             color: #2D3748;
@@ -1671,19 +1677,23 @@
             <h3>步骤 ${stepNumber} (得分: ${state.score})</h3>
             <div class="grid">`;
                     
-                    // 添加网格
-                    for (let j = 0; j < 9; j++) {
-                        const card = state.grid[j];
-                        if (card) {
-                            const { suit, rank } = card;
-                            html += `
+                    // 添加网格 - 确保按照正确的九宫格布局排列
+                    // 对于每一行每一列按顺序填充
+                    for (let row = 0; row < 3; row++) {
+                        for (let col = 0; col < 3; col++) {
+                            const index = row * 3 + col;
+                            const card = state.grid[index];
+                            if (card) {
+                                const { suit, rank } = card;
+                                html += `
                 <div class="cell">
                     <div>${rank}</div>
                     <div class="${suit}">${SUIT_SYMBOLS[suit]}</div>
                 </div>`;
-                        } else {
-                            html += `
+                            } else {
+                                html += `
                 <div class="cell"></div>`;
+                            }
                         }
                     }
                     
@@ -1737,8 +1747,7 @@
                     
                     txt += `步骤 ${stepNumber} (得分: ${state.score})\n`;
                     
-                    // 创建网格的ASCII表示
-                    // 每行显示3个格子，每个格子5个字符宽
+                    // 创建网格的ASCII表示 - 按照标准九宫格顺序排列
                     for (let row = 0; row < 3; row++) {
                         let line = '';
                         for (let col = 0; col < 3; col++) {
