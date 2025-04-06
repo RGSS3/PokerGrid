@@ -171,6 +171,28 @@
                 <span data-i18n="score"></span>: <span id="score" class="font-bold">0</span>
             </p>
         </div>
+        
+        <!-- 撤销/重做和回溯按钮 -->
+        <div class="flex justify-center mb-4 gap-2">
+            <button id="undo-btn" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-1 px-3 rounded-lg text-sm flex items-center opacity-50" disabled>
+                <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span data-i18n="undo"></span>
+            </button>
+            <button id="redo-btn" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-1 px-3 rounded-lg text-sm flex items-center opacity-50" disabled>
+                <span data-i18n="redo"></span>
+                <svg class="w-4 h-4 ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+            </button>
+            <button id="history-btn" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-1 px-3 rounded-lg text-sm flex items-center">
+                <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span data-i18n="history"></span>
+            </button>
+        </div>
 
         <!-- Game Container with Card Counter -->
         <div class="flex flex-col md:flex-row mb-6 justify-center items-center md:items-start gap-4">
@@ -240,6 +262,67 @@
                     <button id="play-again" class="bg-primary hover:bg-primary-600 text-white px-4 py-2 rounded-lg" data-i18n="newGame"></button>
                     <button id="replay-same-seed" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg" data-i18n="replaySameSeed"></button>
                     <button id="share-result" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg" data-i18n="shareResult"></button>
+                    <button id="result-history-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg" data-i18n="reviewHistory"></button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- History Browser Modal (hidden by default) -->
+        <div id="history-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+                <h2 class="text-xl font-bold mb-4 text-center" data-i18n="historyBrowser"></h2>
+                <div class="flex justify-between items-center mb-2">
+                    <div class="text-sm">
+                        <span data-i18n="move"></span>: <span id="history-index" class="font-bold">0</span> / <span id="history-total" class="font-bold">0</span>
+                    </div>
+                    <div class="text-sm">
+                        <span data-i18n="score"></span>: <span id="history-score" class="font-bold">0</span>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center mb-3">
+                    <button id="history-prev" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-lg text-sm flex items-center">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <div id="history-board" class="grid grid-cols-3 gap-2 bg-white dark:bg-gray-900 rounded-lg p-2 mx-2 w-48 h-48">
+                        <!-- Mini grid for history view -->
+                    </div>
+                    <button id="history-next" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-lg text-sm flex items-center">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- 添加当前牌显示区域 -->
+                <div class="flex justify-center items-center gap-2 mb-4">
+                    <div class="text-sm text-gray-600 dark:text-gray-400" data-i18n="currentCard"></div>
+                    <div id="history-current-card" class="card w-10 h-15 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm flex items-center justify-center">
+                        <!-- Current card in history will be displayed here -->
+                    </div>
+                </div>
+                
+                <!-- 导出按钮 -->
+                <div class="flex justify-center gap-2 mb-2">
+                    <button id="export-html" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm flex items-center">
+                        <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span>HTML</span>
+                    </button>
+                    <button id="export-txt" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm flex items-center">
+                        <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span>TXT</span>
+                    </button>
+                </div>
+                
+                <div class="flex justify-center gap-3 mt-4">
+                    <button id="history-select" class="bg-primary hover:bg-primary-600 text-white px-4 py-2 rounded-lg" data-i18n="selectThis"></button>
+                    <button id="history-cancel" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg" data-i18n="cancel"></button>
                 </div>
             </div>
         </div>
@@ -287,10 +370,29 @@
                     'flush': '同花',
                     'straight': '顺子',
                     'threeOfAKind': '三条',
-                    'straightFlush': '同花顺'
+                    'straightFlush': '同花顺',
+                    // 历史记录功能相关翻译
+                    'undo': '撤销',
+                    'redo': '重做',
+                    'history': '历史',
+                    'historyBrowser': '历史回溯浏览器',
+                    'move': '操作',
+                    'selectThis': '选择此状态',
+                    'cancel': '取消',
+                    'reviewHistory': '回溯历史',
+                    'noHistory': '没有历史记录可以查看',
+                    'exportSuccess': '导出成功'
                 },
                 'ja': {
                     name: '日本語',
+                    // 历史记录功能相关翻译
+                    'undo': '元に戻す',
+                    'redo': 'やり直し',
+                    'history': '履歴',
+                    'historyBrowser': '履歴ブラウザ',
+                    'move': '操作',
+                    'selectThis': 'この状態を選択',
+                    'cancel': 'キャンセル',
                     gameTitle: '九宮牌',
                     gameDescription: 'フラッシュ(50点)、ストレート(100点)、スリーカード(100点)またはストレートフラッシュ(200点)を形成して行、列または対角線を消去',
                     comboDescription: '同時消去：2連×2倍、3連×4倍、4連×8倍',
@@ -324,10 +426,19 @@
                     'flush': 'フラッシュ',
                     'straight': 'ストレート',
                     'threeOfAKind': 'スリーカード',
-                    'straightFlush': 'ストレートフラッシュ'
+                    'straightFlush': 'ストレートフラッシュ',
+                    'exportSuccess': 'エクスポート成功'
                 },
                 'ko': {
                     name: '한국어',
+                    // 历史记录功能相关翻译
+                    'undo': '실행 취소',
+                    'redo': '다시 실행',
+                    'history': '기록',
+                    'historyBrowser': '기록 브라우저',
+                    'move': '이동',
+                    'selectThis': '이 상태 선택',
+                    'cancel': '취소',
                     gameTitle: '구궁 카드',
                     gameDescription: '플러시(50점), 스트레이트(100점), 트리플(100점) 또는 스트레이트 플러시(200점)를 형성하여 행, 열 또는 대각선 제거',
                     comboDescription: '동시 제거: 2연속×2배, 3연속×4배, 4연속×8배',
@@ -361,10 +472,19 @@
                     'flush': '플러시',
                     'straight': '스트레이트',
                     'threeOfAKind': '트리플',
-                    'straightFlush': '스트레이트 플러시'
+                    'straightFlush': '스트레이트 플러시',
+                    'exportSuccess': '내보내기 성공'
                 },
                 'en': {
                     name: 'English',
+                    // 历史记录功能相关翻译
+                    'undo': 'Undo',
+                    'redo': 'Redo',
+                    'history': 'History',
+                    'historyBrowser': 'History Browser',
+                    'move': 'Move',
+                    'selectThis': 'Select This State',
+                    'cancel': 'Cancel',
                     gameTitle: 'Grid Poker',
                     gameDescription: 'Form Flush (50pts), Straight (100pts), Three of a Kind (100pts) or Straight Flush (200pts) to clear rows, columns or diagonals',
                     comboDescription: 'Simultaneous clearing: 2 patterns ×2, 3 patterns ×4, 4 patterns ×8',
@@ -398,7 +518,8 @@
                     'flush': 'Flush',
                     'straight': 'Straight',
                     'threeOfAKind': 'Three of a Kind',
-                    'straightFlush': 'Straight Flush'
+                    'straightFlush': 'Straight Flush',
+                    'exportSuccess': 'Export successful'
                 },
                 'fr': {
                     name: 'Français',
@@ -435,7 +556,8 @@
                     'flush': 'Couleur',
                     'straight': 'Suite',
                     'threeOfAKind': 'Brelan',
-                    'straightFlush': 'Quinte Flush'
+                    'straightFlush': 'Quinte Flush',
+                    'exportSuccess': 'Exportation réussie'
                 },
                 'de': {
                     name: 'Deutsch',
@@ -472,7 +594,8 @@
                     'flush': 'Flush',
                     'straight': 'Straight',
                     'threeOfAKind': 'Drilling',
-                    'straightFlush': 'Straight Flush'
+                    'straightFlush': 'Straight Flush',
+                    'exportSuccess': 'Export erfolgreich'
                 },
                 'es': {
                     name: 'Español',
@@ -509,7 +632,8 @@
                     'flush': 'Color',
                     'straight': 'Escalera',
                     'threeOfAKind': 'Trío',
-                    'straightFlush': 'Escalera de Color'
+                    'straightFlush': 'Escalera de Color',
+                    'exportSuccess': 'Exportación exitosa'
                 },
                 'pt': {
                     name: 'Português',
@@ -546,7 +670,8 @@
                     'flush': 'Flush',
                     'straight': 'Sequência',
                     'threeOfAKind': 'Trinca',
-                    'straightFlush': 'Straight Flush'
+                    'straightFlush': 'Straight Flush',
+                    'exportSuccess': 'Exportação bem-sucedida'
                 }
             };
             
@@ -683,6 +808,10 @@
             let currentSeed = '';
             let gameOver = false;
             let seededRandom = null;
+            
+            // 历史记录状态
+            let history = [];
+            let currentHistoryIndex = -1;
 
             // DOM elements
             const gridContainer = document.querySelector('.grid');
@@ -792,12 +921,136 @@
                 `;
             }
 
+            // 保存当前游戏状态
+            function saveGameState() {
+                // 深拷贝网格状态
+                const gridCopy = grid.map(card => card ? { ...card } : null);
+                
+                // 保存游戏状态
+                return {
+                    grid: gridCopy,
+                    currentCard: currentCard ? { ...currentCard } : null,
+                    deck: deck.map(card => ({ ...card })), // 深拷贝牌组
+                    score: score,
+                    remainingCards: deck.length
+                };
+            }
+            
+            // 将新状态添加到历史记录
+            function addToHistory(state) {
+                // 如果在历史中间点进行了新操作，删除该点之后的所有历史
+                if (currentHistoryIndex >= 0 && currentHistoryIndex < history.length - 1) {
+                    history = history.slice(0, currentHistoryIndex + 1);
+                }
+                
+                // 添加新状态到历史记录
+                history.push(state);
+                currentHistoryIndex = history.length - 1;
+                
+                // 更新撤销/重做按钮状态
+                updateUndoRedoButtons();
+            }
+            
+            // 从历史记录中恢复状态
+            function restoreGameState(state) {
+                // 恢复网格状态
+                grid = state.grid.map(card => card ? { ...card } : null);
+                
+                // 恢复当前卡牌
+                currentCard = state.currentCard ? { ...state.currentCard } : null;
+                
+                // 恢复牌组
+                deck = state.deck.map(card => ({ ...card }));
+                
+                // 恢复得分
+                score = state.score;
+                scoreDisplay.textContent = score;
+                
+                // 更新剩余牌数显示
+                remainingCardsDisplay.textContent = deck.length;
+                
+                // 更新网格显示
+                updateGridDisplay();
+                
+                // 更新当前卡牌显示
+                displayCurrentCard(currentCard);
+                
+                // 更新记牌器
+                updateCardCounter();
+                
+                // 更新撤销/重做按钮状态
+                updateUndoRedoButtons();
+                
+                // 检查恢复后的状态是否有可消除的牌型
+                if (hasValidPatterns()) {
+                    // 如果有，执行消除操作
+                    checkPatterns();
+                }
+            }
+            
+            // 更新网格显示
+            function updateGridDisplay() {
+                for (let i = 0; i < 9; i++) {
+                    const cell = gridContainer.children[i];
+                    const card = grid[i];
+                    
+                    if (card) {
+                        const { suit, rank } = card;
+                        cell.innerHTML = `
+                            <div class="card-front flex flex-col items-center justify-center">
+                                <div class="text-xs md:text-sm">${rank}</div>
+                                <div class="${suit} text-lg md:text-xl">${SUIT_SYMBOLS[suit]}</div>
+                            </div>
+                        `;
+                        cell.classList.remove('hover:border-primary', 'dark:hover:border-primary', 'cursor-pointer');
+                    } else {
+                        cell.innerHTML = '';
+                        cell.classList.add('hover:border-primary', 'dark:hover:border-primary', 'cursor-pointer');
+                    }
+                }
+            }
+            
+            // 撤销上一步操作
+            function undoMove() {
+                if (currentHistoryIndex > 0) {
+                    currentHistoryIndex--;
+                    restoreGameState(history[currentHistoryIndex]);
+                }
+            }
+            
+            // 重做上一步操作
+            function redoMove() {
+                if (currentHistoryIndex < history.length - 1) {
+                    currentHistoryIndex++;
+                    restoreGameState(history[currentHistoryIndex]);
+                }
+            }
+            
+            // 更新撤销/重做按钮状态
+            function updateUndoRedoButtons() {
+                // 这里将在按钮添加后实现
+                const undoBtn = document.getElementById('undo-btn');
+                const redoBtn = document.getElementById('redo-btn');
+                
+                if (undoBtn && redoBtn) {
+                    undoBtn.disabled = currentHistoryIndex <= 0;
+                    undoBtn.classList.toggle('opacity-50', currentHistoryIndex <= 0);
+                    
+                    redoBtn.disabled = currentHistoryIndex >= history.length - 1;
+                    redoBtn.classList.toggle('opacity-50', currentHistoryIndex >= history.length - 1);
+                }
+            }
+            
             // Place a card on the grid
             function placeCard(index) {
                 if (grid[index] || !currentCard) {
                     return;
                 }
                 
+                // 记录卡牌
+                const placedCard = {...currentCard};
+                
+                // 放置卡牌
                 grid[index] = currentCard;
                 const cell = gridContainer.children[index];
                 const { suit, rank } = currentCard;
@@ -811,18 +1064,73 @@
                 
                 cell.classList.remove('hover:border-primary', 'dark:hover:border-primary', 'cursor-pointer');
                 
-                // Check for completed patterns
-                checkPatterns();
+                // 检查是否有牌型可以消除，并执行消除
+                // 注意：异步延时执行的消除操作需要特殊处理
+                const hasPatterns = hasValidPatterns();
                 
-                // Draw the next card
+                // 抽下一张牌
                 currentCard = drawCard();
                 displayCurrentCard(currentCard);
                 
-                // Update card counter
+                // 更新记牌器
                 updateCardCounter();
                 
-                // Check if the game is over
-                checkGameOver();
+                // 处理异步逻辑
+                if (hasPatterns) {
+                    // 立即进行牌型检查，这会触发消除动画
+                    const validPatterns = collectValidPatterns();
+                    
+                    // 执行消除操作
+                    processPatterns(validPatterns);
+                    
+                    // 在消除动画完成后保存状态
+                    setTimeout(() => {
+                        // 只记录消除后的最终状态
+                        addToHistory(saveGameState());
+                        
+                        // 检查游戏是否结束
+                        checkGameOver();
+                    }, 400); // 稍微长于动画时间
+                } else {
+                    // 如果没有需要消除的牌型，直接添加历史记录
+                    addToHistory(saveGameState());
+                    
+                    // 检查游戏是否结束
+                    checkGameOver();
+                }
+            }
+            
+            // 收集有效的牌型(分离自checkPatterns函数)
+            function collectValidPatterns() {
+                const patterns = [
+                    // Rows
+                    [0, 1, 2],
+                    [3, 4, 5],
+                    [6, 7, 8],
+                    // Columns
+                    [0, 3, 6],
+                    [1, 4, 7],
+                    [2, 5, 8],
+                    // Diagonals
+                    [0, 4, 8],
+                    [2, 4, 6]
+                ];
+                
+                const validPatterns = [];
+                
+                // Collect all valid patterns
+                for (const pattern of patterns) {
+                    if (pattern.every(index => grid[index])) {
+                        const cards = pattern.map(index => grid[index]);
+                        const patternType = getPatternType(cards);
+                        
+                        if (patternType) {
+                            validPatterns.push({ pattern, patternType });
+                        }
+                    }
+                }
+                
+                return validPatterns;
             }
 
             // Check for completed patterns (rows, columns, diagonals)
@@ -1215,6 +1523,268 @@
                 }
             }
             
+            // 导出历史记录为HTML
+            function exportHistoryAsHTML() {
+                // 创建一个完整的HTML文档
+                let html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>九宫牌历史记录 - ${currentSeed}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .dark-mode {
+            background-color: #222;
+            color: #eee;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .seed {
+            font-family: monospace;
+            background: #f5f5f5;
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            word-break: break-all;
+        }
+        .dark-mode .seed {
+            background: #444;
+        }
+        .game-info {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .history-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+        }
+        .history-item {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            width: 180px;
+            margin: 0 auto;
+        }
+        .cell {
+            width: 50px;
+            height: 75px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+        .dark-mode .cell {
+            background: #333;
+            border-color: #555;
+        }
+        .current-card {
+            width: 40px;
+            height: 60px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin: 10px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+        .dark-mode .current-card {
+            background: #333;
+            border-color: #555;
+        }
+        .heart, .diamond, .spade, .club {
+            font-size: 1.2em;
+        }
+        .heart, .diamond {
+            color: #e53e3e;
+        }
+        .dark-mode .heart, .dark-mode .diamond {
+            color: #fc8181;
+        }
+        .spade {
+            color: #805ad5;
+        }
+        .dark-mode .spade {
+            color: #9f7aea;
+        }
+        .club {
+            color: #2D3748;
+        }
+        .dark-mode .club {
+            color: #E2E8F0;
+        }
+        .toggle-dark {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #eee;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .dark-mode .toggle-dark {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <button class="toggle-dark" onclick="document.body.classList.toggle('dark-mode')">🔆</button>
+    <h1>九宫牌历史记录</h1>
+    <div class="game-info">
+        <p><strong>种子:</strong> <span class="seed">${currentSeed}</span></p>
+        <p><strong>得分:</strong> ${score} | <strong>剩余牌数:</strong> ${deck.length}</p>
+    </div>
+    <div class="history-container">`;
+                
+                // 添加每个历史状态
+                for (let i = 0; i < history.length; i++) {
+                    const state = history[i];
+                    const stepNumber = i + 1;
+                    
+                    html += `
+        <div class="history-item">
+            <h3>步骤 ${stepNumber} (得分: ${state.score})</h3>
+            <div class="grid">`;
+                    
+                    // 添加网格
+                    for (let j = 0; j < 9; j++) {
+                        const card = state.grid[j];
+                        if (card) {
+                            const { suit, rank } = card;
+                            html += `
+                <div class="cell">
+                    <div>${rank}</div>
+                    <div class="${suit}">${SUIT_SYMBOLS[suit]}</div>
+                </div>`;
+                        } else {
+                            html += `
+                <div class="cell"></div>`;
+                        }
+                    }
+                    
+                    html += `
+            </div>
+            <p>当前牌:</p>`;
+                    
+                    // 添加当前牌
+                    if (state.currentCard) {
+                        const { suit, rank } = state.currentCard;
+                        html += `
+            <div class="current-card">
+                <div>${rank}</div>
+                <div class="${suit}">${SUIT_SYMBOLS[suit]}</div>
+            </div>`;
+                    } else {
+                        html += `
+            <div class="current-card">-</div>`;
+                    }
+                    
+                    html += `
+        </div>`;
+                }
+                
+                html += `
+    </div>
+    <` + `script>
+        // 检测系统颜色模式并自动应用
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.body.classList.add('dark-mode');
+        }
+    </` + `script>
+</body>
+</` + `html>`;
+                
+                // 创建并下载文件
+                downloadFile(html, `九宫牌历史记录-${currentSeed}.html`, 'text/html');
+                showToast(t('exportSuccess'));
+            }
+            
+            // 导出历史记录为TXT
+            function exportHistoryAsTXT() {
+                let txt = `九宫牌历史记录\n`;
+                txt += `种子: ${currentSeed}\n`;
+                txt += `得分: ${score} | 剩余牌数: ${deck.length}\n\n`;
+                
+                // 添加每个历史状态
+                for (let i = 0; i < history.length; i++) {
+                    const state = history[i];
+                    const stepNumber = i + 1;
+                    
+                    txt += `步骤 ${stepNumber} (得分: ${state.score})\n`;
+                    
+                    // 创建网格的ASCII表示
+                    // 每行显示3个格子，每个格子5个字符宽
+                    for (let row = 0; row < 3; row++) {
+                        let line = '';
+                        for (let col = 0; col < 3; col++) {
+                            const index = row * 3 + col;
+                            const card = state.grid[index];
+                            if (card) {
+                                // 使用花色符号
+                                line += `[${card.rank}${SUIT_SYMBOLS[card.suit]}] `;
+                            } else {
+                                line += '[   ] ';
+                            }
+                        }
+                        txt += line + '\n';
+                    }
+                    
+                    // 添加当前牌
+                    if (state.currentCard) {
+                        const { suit, rank } = state.currentCard;
+                        txt += `当前牌: [${rank}${SUIT_SYMBOLS[suit]}]\n`;
+                    } else {
+                        txt += `当前牌: [无]\n`;
+                    }
+                    
+                    txt += '\n';
+                }
+                
+                // 创建并下载文件
+                downloadFile(txt, `九宫牌历史记录-${currentSeed}.txt`, 'text/plain');
+                showToast(t('exportSuccess'));
+            }
+            
+            // 通用下载文件函数
+            function downloadFile(content, filename, contentType) {
+                const blob = new Blob([content], { type: contentType });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 100);
+            }
+            
             // Show toast notification
             function showToast(message) {
                 toastElement.textContent = message;
@@ -1229,7 +1799,7 @@
             function shareGame() {
                 // 确定分享URL - 如果当前页面有URL就使用当前页面URL，否则使用默认的poe.com链接
                 let shareUrl = "https://poe.com/PokerGrid";
-                if (window.location.href && window.location.href !== "about:blank") {
+                if (window.location.href && window.location.href !== "about:srcdoc") {
                     // 创建URL对象移除任何现有的查询参数
                     const url = new URL(window.location.href);
                     // 移除路径中的查询参数部分
@@ -1293,16 +1863,183 @@
                 // Reset message
                 gameMessage.textContent = '';
                 gameMessage.classList.remove('text-primary', 'font-bold');
+                
+                // 重置历史记录并保存初始状态
+                history = [];
+                currentHistoryIndex = -1;
+                addToHistory(saveGameState());
+                updateUndoRedoButtons();
             }
+            
+            // 初始化历史浏览器视图
+            function initializeHistoryBrowser() {
+                const historyBoard = document.getElementById('history-board');
+                historyBoard.innerHTML = '';
+                
+                // 创建9个小格子
+                for (let i = 0; i < 9; i++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('bg-white', 'dark:bg-gray-800', 'border', 'border-gray-300', 'dark:border-gray-700', 'rounded', 'w-14', 'h-14', 'flex', 'items-center', 'justify-center', 'text-xs');
+                    historyBoard.appendChild(cell);
+                }
+            }
+            
+            // 在历史浏览器中显示特定的游戏状态
+            function displayHistoryState(index) {
+                if (index < 0 || index >= history.length) return;
+                
+                const state = history[index];
+                const historyBoard = document.getElementById('history-board');
+                const historyIndexDisplay = document.getElementById('history-index');
+                const historyTotalDisplay = document.getElementById('history-total');
+                const historyScoreDisplay = document.getElementById('history-score');
+                const historyCurrentCard = document.getElementById('history-current-card');
+                
+                // 更新显示的索引和分数
+                historyIndexDisplay.textContent = index + 1;
+                historyTotalDisplay.textContent = history.length;
+                historyScoreDisplay.textContent = state.score;
+                
+                // 更新棋盘显示
+                for (let i = 0; i < 9; i++) {
+                    const cell = historyBoard.children[i];
+                    const card = state.grid[i];
+                    
+                    if (card) {
+                        const { suit, rank } = card;
+                        cell.innerHTML = `
+                            <div class="flex flex-col items-center justify-center">
+                                <div class="text-xs">${rank}</div>
+                                <div class="${suit} text-sm">${SUIT_SYMBOLS[suit]}</div>
+                            </div>
+                        `;
+                    } else {
+                        cell.innerHTML = '';
+                    }
+                }
+                
+                // 更新当前牌显示
+                if (state.currentCard) {
+                    const { suit, rank } = state.currentCard;
+                    historyCurrentCard.innerHTML = `
+                        <div class="flex flex-col items-center justify-center">
+                            <div class="text-xs">${rank}</div>
+                            <div class="${suit} text-sm">${SUIT_SYMBOLS[suit]}</div>
+                        </div>
+                    `;
+                } else {
+                    historyCurrentCard.innerHTML = `<div class="text-xs text-gray-400">-</div>`;
+                }
+                
+                // 更新导航按钮状态
+                const prevBtn = document.getElementById('history-prev');
+                const nextBtn = document.getElementById('history-next');
+                
+                prevBtn.disabled = index <= 0;
+                prevBtn.classList.toggle('opacity-50', index <= 0);
+                
+                nextBtn.disabled = index >= history.length - 1;
+                nextBtn.classList.toggle('opacity-50', index >= history.length - 1);
+            }
+            
+            // 打开历史浏览器
+            function openHistoryBrowser() {
+                if (history.length <= 1) {
+                    showToast(t('noHistory'));
+                    return;
+                }
+                
+                const historyModal = document.getElementById('history-modal');
+                historyModal.classList.remove('hidden');
+                
+                // 初始化历史浏览器视图
+                initializeHistoryBrowser();
+                
+                // 显示最新的状态
+                currentBrowsingIndex = currentHistoryIndex;
+                displayHistoryState(currentBrowsingIndex);
+            }
+            
+            // 关闭历史浏览器
+            function closeHistoryBrowser() {
+                const historyModal = document.getElementById('history-modal');
+                historyModal.classList.add('hidden');
+            }
+            
+            // 选择历史状态
+            function selectHistoryState() {
+                if (currentBrowsingIndex >= 0 && currentBrowsingIndex < history.length) {
+                    currentHistoryIndex = currentBrowsingIndex;
+                    restoreGameState(history[currentHistoryIndex]);
+                    closeHistoryBrowser();
+                }
+            }
+            
+            let currentBrowsingIndex = 0;
             
             // Event listeners
             function setupEventListeners() {
+                // 添加导出按钮事件监听器
+                document.getElementById('export-html').addEventListener('click', exportHistoryAsHTML);
+                document.getElementById('export-txt').addEventListener('click', exportHistoryAsTXT);
+                
                 newGameBtn.addEventListener('click', () => {
                     // 清空游戏日志（只在开始新游戏时清空，而不是在游戏结束时）
                     const gameLog = document.querySelector('#game-log div');
                     gameLog.innerHTML = '';
                     
                     startGame();
+                    
+                    // 清空历史记录
+                    history = [];
+                    currentHistoryIndex = -1;
+                    
+                    // 添加初始状态到历史记录
+                    addToHistory(saveGameState());
+                });
+                
+                // 添加撤销按钮事件监听器
+                document.getElementById('undo-btn').addEventListener('click', undoMove);
+                
+                // 添加重做按钮事件监听器
+                document.getElementById('redo-btn').addEventListener('click', redoMove);
+                
+                // 添加历史按钮事件监听器
+                document.getElementById('history-btn').addEventListener('click', openHistoryBrowser);
+                
+                // 添加历史浏览器的事件监听器
+                document.getElementById('history-prev').addEventListener('click', () => {
+                    if (currentBrowsingIndex > 0) {
+                        currentBrowsingIndex--;
+                        displayHistoryState(currentBrowsingIndex);
+                    }
+                });
+                
+                document.getElementById('history-next').addEventListener('click', () => {
+                    if (currentBrowsingIndex < history.length - 1) {
+                        currentBrowsingIndex++;
+                        displayHistoryState(currentBrowsingIndex);
+                    }
+                });
+                
+                document.getElementById('history-select').addEventListener('click', selectHistoryState);
+                document.getElementById('history-cancel').addEventListener('click', closeHistoryBrowser);
+                
+                // 添加游戏结束屏幕中的历史回溯按钮事件监听器
+                document.getElementById('result-history-btn').addEventListener('click', () => {
+                    // 首先关闭游戏结束对话框
+                    resultModal.classList.add('hidden');
+                    
+                    // 然后打开历史回溯浏览器
+                    openHistoryBrowser();
+                    
+                    // 当游戏结束后，历史回溯选择状态后，需要重置游戏状态为未结束
+                    document.getElementById('history-select').addEventListener('click', () => {
+                        // 只有当从游戏结束状态进入历史浏览时才需要重置游戏结束状态
+                        if (gameOver) {
+                            gameOver = false;
+                        }
+                    }, {once: true}); // 只触发一次
                 });
                 
                 // 添加骰子按钮的事件监听器，用于生成新的随机种子，但使用相同的游戏
