@@ -812,6 +812,9 @@
             // 历史记录状态
             let history = [];
             let currentHistoryIndex = -1;
+            
+            // 游戏日志数据 - 纯数据结构，用于导出
+            let gameLogData = [];
 
             // DOM elements
             const gridContainer = document.querySelector('.grid');
@@ -1284,7 +1287,28 @@
                 const gameLog = document.querySelector('#game-log div');
                 const logEntry = document.createElement('div');
                 
-                // Format card display for log
+                // 创建日志的纯数据结构，用于导出
+                const logData = {
+                    timestamp: new Date().toISOString(),
+                    historyIndex: currentHistoryIndex, // 保存对应的历史步骤索引
+                    step: currentHistoryIndex + 1,     // 人类可读的步骤编号
+                    patternCount: patternCount,
+                    totalPoints: totalPoints,
+                    patterns: patternDetails.map(p => ({
+                        type: p.type,
+                        points: p.points,
+                        cards: p.cards.map(card => ({
+                            suit: card.suit,
+                            rank: card.rank,
+                            symbol: SUIT_SYMBOLS[card.suit]
+                        }))
+                    }))
+                };
+                
+                // 将数据添加到全局日志数据数组
+                gameLogData.push(logData);
+                
+                // Format card display for log UI
                 function formatCards(cards) {
                     return cards.map(card => {
                         let colorClass = '';
@@ -1523,15 +1547,38 @@
                 }
             }
             
+            // 获取步骤对应的消除记录
+            function getLogEntriesForStep(stepIndex) {
+                return gameLogData.filter(log => log.historyIndex === stepIndex);
+            }
+            
+            // 根据当前语言获取牌型名称
+            function getPatternNameByLang(type) {
+                return t(type);
+            }
+            
             // 导出历史记录为HTML
             function exportHistoryAsHTML() {
+                // 准备文档的 HTML lang 属性值
+                let htmlLang = currentLanguage;
+                
+                // 针对不同语言使用对应的游戏名称
+                let gameTitle = t('gameTitle');
+                let seedLabel = t('randomSeed');
+                let scoreLabel = t('score');
+                let remainingCardsLabel = t('remainingCards');
+                let stepLabel = t('move');
+                let currentCardLabel = t('currentCard');
+                let clearingRecordLabel = t('clearingRecord');
+                let noCardText = t('no') || '-';
+                
                 // 创建一个完整的HTML文档
                 let html = `<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="${htmlLang}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>九宫牌历史记录 - ${currentSeed}</title>
+    <title>${gameTitle} - ${currentSeed}</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -1565,13 +1612,24 @@
         }
         .history-container {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 30px;
+            flex-direction: column;
+            gap: 20px;
         }
         .history-item {
-            margin-bottom: 30px;
-            text-align: center;
+            margin-bottom: 10px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .dark-mode .history-item {
+            background: #2d2d2d;
+            border-color: #444;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
         }
         .grid {
             display: grid;
@@ -1656,26 +1714,75 @@
         .dark-mode .toggle-dark {
             background: #555;
         }
+        .game-log {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+        }
+        .dark-mode .game-log {
+            background: #3a3a3a;
+        }
+        .log-entry {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .dark-mode .log-entry {
+            background: #333;
+        }
+        .log-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .log-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        .log-card {
+            padding: 3px 6px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background: white;
+        }
+        .dark-mode .log-card {
+            background: #444;
+            border-color: #555;
+        }
+        .card-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
     <button class="toggle-dark" onclick="document.body.classList.toggle('dark-mode')">🔆</button>
-    <h1>九宫牌历史记录</h1>
+    <h1>${gameTitle}</h1>
     <div class="game-info">
-        <p><strong>种子:</strong> <span class="seed">${currentSeed}</span></p>
-        <p><strong>得分:</strong> ${score} | <strong>剩余牌数:</strong> ${deck.length}</p>
+        <p><strong>${seedLabel}:</strong> <span class="seed">${currentSeed}</span></p>
+        <p><strong>${scoreLabel}:</strong> ${score} | <strong>${remainingCardsLabel}:</strong> ${deck.length}</p>
     </div>
     <div class="history-container">`;
                 
-                // 添加每个历史状态
+                // 添加每个历史状态与相应的消除记录
                 for (let i = 0; i < history.length; i++) {
                     const state = history[i];
                     const stepNumber = i + 1;
                     
+                    // 查找该步骤对应的消除记录
+                    const logEntries = getLogEntriesForStep(i);
+                    
                     html += `
         <div class="history-item">
-            <h3>步骤 ${stepNumber} (得分: ${state.score})</h3>
-            <div class="grid">`;
+            <div class="history-header">
+                <h3>${t('move')}: ${stepNumber} (${t('score')}: ${state.score})</h3>
+            </div>
+            <div class="card-container">
+                <div class="grid">`;
                     
                     // 添加网格 - 确保按照正确的九宫格布局排列
                     // 对于每一行每一列按顺序填充
@@ -1698,25 +1805,105 @@
                     }
                     
                     html += `
-            </div>
-            <p>当前牌:</p>`;
+                </div>
+                <p>${currentCardLabel}:</p>`;
                     
                     // 添加当前牌
                     if (state.currentCard) {
                         const { suit, rank } = state.currentCard;
                         html += `
-            <div class="current-card">
-                <div>${rank}</div>
-                <div class="${suit}">${SUIT_SYMBOLS[suit]}</div>
-            </div>`;
+                <div class="current-card">
+                    <div>${rank}</div>
+                    <div class="${suit}">${SUIT_SYMBOLS[suit]}</div>
+                </div>`;
                     } else {
                         html += `
-            <div class="current-card">-</div>`;
+                <div class="current-card">-</div>`;
+                    }
+                    
+                    html += `
+            </div>`;
+                    
+                    // 如果有消除记录，添加到此步骤下方
+                    if (logEntries.length > 0) {
+                        html += `
+            <div class="game-log">
+                <h4>${clearingRecordLabel}</h4>`;
+                        
+                        for (const logEntry of logEntries) {
+                            html += `
+                <div class="log-entry">`;
+                            
+                            if (logEntry.patternCount > 1) {
+                                let multiplierText;
+                                if (logEntry.patternCount >= 4) {
+                                    multiplierText = '8×';
+                                } else if (logEntry.patternCount === 3) {
+                                    multiplierText = '4×';
+                                } else {
+                                    multiplierText = '2×';
+                                }
+                                
+                                html += `
+                    <div class="log-title">${t('multiplePattern', {
+                        count: logEntry.patternCount, 
+                        multiplier: multiplierText, 
+                        points: logEntry.totalPoints
+                    })}</div>`;
+                                
+                                // 添加每个牌型的详情
+                                for (const pattern of logEntry.patterns) {
+                                    html += `
+                    <div>
+                        <span class="pattern-type">${getPatternNameByLang(pattern.type)}</span>
+                        <span class="log-cards">`;
+                                    
+                                    // 添加牌型中的每张牌
+                                    for (const card of pattern.cards) {
+                                        html += `
+                            <span class="log-card ${card.suit}">${card.rank}${card.symbol}</span>`;
+                                    }
+                                    
+                                    html += `
+                        </span>
+                        = ${pattern.points} ${t('score').substring(0,1)}
+                    </div>`;
+                                }
+                            } else if (logEntry.patterns.length === 1) {
+                                // 单个牌型
+                                const pattern = logEntry.patterns[0];
+                                
+                                // 格式化卡牌显示
+                                let cardsDisplay = '';
+                                for (const card of pattern.cards) {
+                                    cardsDisplay += `<span class="log-card ${card.suit}">${card.rank}${card.symbol}</span>`;
+                                }
+                                
+                                html += `
+                    <div class="log-title">${t('singlePattern', {
+                        pattern: getPatternNameByLang(pattern.type),
+                        cards: '', // 在HTML版本中不使用文本表示牌
+                        points: pattern.points
+                    })}</div>
+                    <div class="log-cards">
+                        ${cardsDisplay}
+                    </div>`;
+                            }
+                            
+                            html += `
+                </div>`;
+                        }
+                        
+                        html += `
+            </div>`;
                     }
                     
                     html += `
         </div>`;
                 }
+                
+                html += `
+    </div>`;
                 
                 html += `
     </div>
@@ -1736,16 +1923,28 @@
             
             // 导出历史记录为TXT
             function exportHistoryAsTXT() {
-                let txt = `九宫牌历史记录\n`;
-                txt += `种子: ${currentSeed}\n`;
-                txt += `得分: ${score} | 剩余牌数: ${deck.length}\n\n`;
+                // 使用当前语言
+                let gameTitle = t('gameTitle');
+                let seedLabel = t('randomSeed');
+                let scoreLabel = t('score');
+                let remainingCardsLabel = t('remainingCards');
+                let moveLabel = t('move');
+                let currentCardLabel = t('currentCard');
+                let clearingRecordLabel = t('clearingRecord');
+                let noneText = t('no') || '-';
+                let cardsLabel = t('cards') || '牌';
+
+                let txt = `${gameTitle}\n`;
+                txt += `${seedLabel}: ${currentSeed}\n`;
+                txt += `${scoreLabel}: ${score} | ${remainingCardsLabel}: ${deck.length}\n\n`;
                 
                 // 添加每个历史状态
                 for (let i = 0; i < history.length; i++) {
                     const state = history[i];
                     const stepNumber = i + 1;
                     
-                    txt += `步骤 ${stepNumber} (得分: ${state.score})\n`;
+                    // 按当前语言获取步骤标签
+                    txt += `${moveLabel} ${stepNumber} (${scoreLabel}: ${state.score})\n`;
                     
                     // 创建网格的ASCII表示 - 按照标准九宫格顺序排列
                     for (let row = 0; row < 3; row++) {
@@ -1766,13 +1965,67 @@
                     // 添加当前牌
                     if (state.currentCard) {
                         const { suit, rank } = state.currentCard;
-                        txt += `当前牌: [${rank}${SUIT_SYMBOLS[suit]}]\n`;
+                        txt += `${currentCardLabel}: [${rank}${SUIT_SYMBOLS[suit]}]\n`;
                     } else {
-                        txt += `当前牌: [无]\n`;
+                        txt += `${currentCardLabel}: [${noneText}]\n`;
                     }
                     
-                    txt += '\n';
+                    // 查找该步骤对应的消除记录
+                    const logEntries = getLogEntriesForStep(i);
+                    if (logEntries.length > 0) {
+                        txt += `\n${clearingRecordLabel}:\n`;
+                        
+                        // 添加消除记录
+                        for (const logEntry of logEntries) {
+                            if (logEntry.patternCount > 1) {
+                                const multiplierText = logEntry.patternCount === 2 ? "2×" : 
+                                            logEntry.patternCount === 3 ? "4×" : "8×";
+                                
+                                txt += `  ${t('multiplePattern', {
+                                    count: logEntry.patternCount, 
+                                    multiplier: multiplierText, 
+                                    points: logEntry.totalPoints
+                                })}\n`;
+                                
+                                // 添加每个牌型的详情
+                                for (const pattern of logEntry.patterns) {
+                                    const patternName = t(pattern.type);
+                                    
+                                    txt += `    ${patternName}: `;
+                                    
+                                    // 添加牌型中的每张牌
+                                    for (const card of pattern.cards) {
+                                        txt += `${card.rank}${card.symbol} `;
+                                    }
+                                    
+                                    txt += `= ${pattern.points} ${t('score').substring(0,1)}\n`;
+                                }
+                            } else if (logEntry.patterns.length === 1) {
+                                // 单个牌型
+                                const pattern = logEntry.patterns[0];
+                                const patternName = t(pattern.type);
+                                
+                                txt += `  ${t('singlePattern', {
+                                    pattern: patternName,
+                                    cards: '',
+                                    points: pattern.points
+                                })}\n`;
+                                
+                                txt += `    ${cardsLabel}: `;
+                                
+                                // 添加牌型中的每张牌
+                                for (const card of pattern.cards) {
+                                    txt += `${card.rank}${card.symbol} `;
+                                }
+                                txt += `\n`;
+                            }
+                        }
+                    }
+                    
+                    txt += `\n`;
                 }
+                
+
                 
                 // 创建并下载文件
                 downloadFile(txt, `九宫牌历史记录-${currentSeed}.txt`, 'text/plain');
@@ -1846,6 +2099,9 @@
                 grid = Array(9).fill(null);
                 score = 0;
                 gameOver = false;
+                
+                // 重置游戏日志数据
+                gameLogData = [];
                 
                 // Create and shuffle deck
                 deck = createDeck();
