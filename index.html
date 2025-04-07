@@ -393,6 +393,7 @@
                     'move': '操作',
                     'selectThis': 'この状態を選択',
                     'cancel': 'キャンセル',
+                    'reviewHistory': '履歴を確認',
                     gameTitle: '九宮牌',
                     gameDescription: 'フラッシュ(50点)、ストレート(100点)、スリーカード(100点)またはストレートフラッシュ(200点)を形成して行、列または対角線を消去',
                     comboDescription: '同時消去：2連×2倍、3連×4倍、4連×8倍',
@@ -439,6 +440,7 @@
                     'move': '이동',
                     'selectThis': '이 상태 선택',
                     'cancel': '취소',
+                    'reviewHistory': '기록 검토',
                     gameTitle: '구궁 카드',
                     gameDescription: '플러시(50점), 스트레이트(100점), 트리플(100점) 또는 스트레이트 플러시(200점)를 형성하여 행, 열 또는 대각선 제거',
                     comboDescription: '동시 제거: 2연속×2배, 3연속×4배, 4연속×8배',
@@ -485,6 +487,7 @@
                     'move': 'Move',
                     'selectThis': 'Select This State',
                     'cancel': 'Cancel',
+                    'reviewHistory': 'Review History',
                     gameTitle: 'Grid Poker',
                     gameDescription: 'Form Flush (50pts), Straight (100pts), Three of a Kind (100pts) or Straight Flush (200pts) to clear rows, columns or diagonals',
                     comboDescription: 'Simultaneous clearing: 2 patterns ×2, 3 patterns ×4, 4 patterns ×8',
@@ -557,7 +560,8 @@
                     'straight': 'Suite',
                     'threeOfAKind': 'Brelan',
                     'straightFlush': 'Quinte Flush',
-                    'exportSuccess': 'Exportation réussie'
+                    'exportSuccess': 'Exportation réussie',
+                    'reviewHistory': 'Consulter l\'historique'
                 },
                 'de': {
                     name: 'Deutsch',
@@ -595,7 +599,8 @@
                     'straight': 'Straight',
                     'threeOfAKind': 'Drilling',
                     'straightFlush': 'Straight Flush',
-                    'exportSuccess': 'Export erfolgreich'
+                    'exportSuccess': 'Export erfolgreich',
+                    'reviewHistory': 'Verlauf ansehen'
                 },
                 'es': {
                     name: 'Español',
@@ -633,7 +638,8 @@
                     'straight': 'Escalera',
                     'threeOfAKind': 'Trío',
                     'straightFlush': 'Escalera de Color',
-                    'exportSuccess': 'Exportación exitosa'
+                    'exportSuccess': 'Exportación exitosa',
+                    'reviewHistory': 'Revisar historial'
                 },
                 'pt': {
                     name: 'Português',
@@ -671,7 +677,8 @@
                     'straight': 'Sequência',
                     'threeOfAKind': 'Trinca',
                     'straightFlush': 'Straight Flush',
-                    'exportSuccess': 'Exportação bem-sucedida'
+                    'exportSuccess': 'Exportação bem-sucedida',
+                    'reviewHistory': 'Revisar histórico'
                 }
             };
             
@@ -1555,7 +1562,25 @@
             
             // 获取步骤对应的消除记录
             function getLogEntriesForStep(stepIndex) {
-                return gameLogData.filter(log => log.historyIndex === stepIndex);
+                // 获取该步骤所有的消除记录（如果多个牌型同时消除，可能有多条记录）
+                const entries = gameLogData.filter(log => log.historyIndex === stepIndex);
+                
+                // 按消除类型和牌型去重，避免在导出时出现重复记录
+                const uniqueEntries = [];
+                const seen = new Set();
+                
+                for (const entry of entries) {
+                    // 创建唯一标识，包含步骤索引和牌型类型数组
+                    const patternTypes = entry.patterns.map(p => p.type).sort().join(',');
+                    const key = `${entry.historyIndex}:${patternTypes}:${entry.totalPoints}`;
+                    
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        uniqueEntries.push(entry);
+                    }
+                }
+                
+                return uniqueEntries;
             }
             
             // 根据当前语言获取牌型名称
