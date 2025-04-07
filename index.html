@@ -856,7 +856,7 @@
                     
                     // Add click event
                     cell.addEventListener('click', () => {
-                        if (!gameOver && currentCard && !grid[i]) {
+                        if (currentCard && !grid[i]) {
                             placeCard(i);
                         }
                     });
@@ -1016,6 +1016,12 @@
             // 撤销上一步操作
             function undoMove() {
                 if (currentHistoryIndex > 0) {
+                    // 如果当前是游戏结束状态，先重置它
+                    if (gameOver) {
+                        gameOver = false;
+                        resultModal.classList.add('hidden');
+                    }
+                    
                     currentHistoryIndex--;
                     restoreGameState(history[currentHistoryIndex]);
                 }
