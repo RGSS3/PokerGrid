@@ -797,7 +797,8 @@
                 'flush': 50,        // 同花
                 'straight': 100,    // 顺子
                 'threeOfAKind': 100,// 三条
-                'straightFlush': 200// 同花顺
+                'straightFlush': 200,// 同花顺
+                'royalFlush': 400
             };
             
             // 特殊加分规则
@@ -1375,6 +1376,10 @@
 
             // Identify the pattern type if any
             function getPatternType(cards) {
+                if (isRoyalFlush(cards)) {
+                    return 'royalFlush';
+                }
+                
                 // Check for straight flush (同花顺)
                 if (isStraight(cards) && isFlush(cards)) {
                     return 'straightFlush';
@@ -1402,6 +1407,21 @@
             function isFlush(cards) {
                 const firstSuit = cards[0].suit;
                 return cards.every(card => card.suit === firstSuit);
+            }
+
+            function isRoyalFlush(cards) {
+                const firstSuit = cards[0].suit;
+                const values = cards.map(card => RANK_VALUES[card.rank]).sort((a, b) => a - b);
+                if (values[0] === 1 && values[1] === 12 && values[2] === 13 && cards.every(card => card.suit === firstSuit)) {
+                    return true;
+                }
+                if (values[0] === 11 && values[1] === 12 && values[2] === 13 && cards.every(card => card.suit === firstSuit)) {
+                    return true;
+                }
+                if (values[0] === 10 && values[1] === 11 && values[2] === 12 && cards.every(card => card.suit === firstSuit)) {
+                    return true;
+                }
+                return false;
             }
 
             // Check if cards form a straight (sequential values)
